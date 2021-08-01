@@ -3,7 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   creationTimestamp: null
   labels:
-    io.kompose.service: promtail-claim0
+    service: promtail-claim0
   name: promtail-claim0
 spec:
   accessModes:
