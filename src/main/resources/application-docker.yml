@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/postgres
+    username: postgres
+    password: 123
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    virtualHost: /
+    username: guest
+    password: guest
+  data:
+    mongodb:
+      uri: mongodb://mongo-api/auditClient?retryWrites=true&w=majority
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: your-app-client-id
+            client-secret: your-app-client-secret
+          github:
+            client-id: your-app-client-id
+            client-secret: your-app-client-secret
+          facebook:
+            client-id: your-app-client-id
+            client-secret: your-app-client-secret
+          keycloak:
+            provider: keycloak
+            client-id: croapp
+            client-secret: 4bce0783-33b5-4937-9749-9c1c62cc6da2
+            redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
+            authorization-grant-type: authorization_code
+        provider:
+          keycloak:
+            authorization-uri: http://keycloack:8000/auth/realms/croa/protocol/openid-connect/auth
+            token-uri: http://keycloack:8000/auth/realms/croa/protocol/openid-connect/token
+            user-info-uri: http://keycloack:8000/auth/realms/croa/protocol/openid-connect/userinfo
+            jwk-set-uri: http://keycloack:8000/auth/realms/croa/protocol/openid-connect/certs
+            user-name-attribute: preferred_username
+springdoc:
+  swagger-ui:
+    server.list: http://localhost:${server.port}${server.servlet.context-path}

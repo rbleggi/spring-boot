@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe
+      convert -f docker-compose.yml
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: graylog
+  name: graylog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: graylog
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe
+          convert -f docker-compose.yml
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: graylog
+    spec:
+      containers:
+      - env:
+        - name: GRAYLOG_ELASTICSEARCH_VERSION
+          value: "7"
+        - name: GRAYLOG_HTTP_EXTERNAL_URI
+          value: http://localhost:9000/
+        image: graylog/graylog:4.1.1
+        imagePullPolicy: ""
+        name: graylog
+        ports:
+        - containerPort: 9000
+        - containerPort: 1514
+        - containerPort: 1514
+          protocol: UDP
+        - containerPort: 12201
+        - containerPort: 12201
+          protocol: UDP
+        - containerPort: 5555
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

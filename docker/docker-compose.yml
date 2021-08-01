@@ -1,0 +1,161 @@
+version: '3.1'
+
+services:
+
+  #DBs
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: 123
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "spring"
+    ports:
+      - 5432:5432
+
+  mongo-api:
+    container_name: mongo-api
+    image: mongo:4.2
+    ports:
+      - 27017:27017
+
+  mongo-express:
+    container_name: mongo-express
+    image: mongo-express
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo-api
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    ports:
+      - 8081:8081
+    links:
+      - mongo-api
+    depends_on:
+      - mongo-api
+
+  redis:
+    container_name: redis
+    image: redis
+
+  croa-api:
+    container_name: croa-api
+    image: croa-api
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - "SPRING_PROFILES_ACTIVE=docker"
+    ports:
+      - 8090:8090
+    links:
+      - postgres
+      - mongo-api
+    depends_on:
+      - postgres
+      - mongo-api
+
+  keycloack:
+    container_name: keycloack
+    image: quay.io/keycloak/keycloak
+    environment:
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin
+      - DB_VENDOR=h2
+    ports:
+      - 8000:8080
+
+  #Mensageria
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+      - 15692:15692
+
+  #Metricas
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    command: --web.enable-lifecycle --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus:/etc/prometheus
+    ports:
+      - 9090:9090
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    depends_on:
+      - prometheus
+
+  loki:
+    container_name: loki
+    image: grafana/loki
+    ports:
+      - 3100:3100
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    container_name: promtail
+    image: grafana/promtail
+    volumes:
+      - /var/log:/var/log
+    command: -config.file=/etc/promtail/config.yml
+
+  #Logs
+  mongo:
+    container_name: mongo
+    image: mongo:4.2
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+
+  graylog:
+    container_name: graylog
+    image: graylog/graylog:4.1.1
+    environment:
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://localhost:9000/
+      - GRAYLOG_ELASTICSEARCH_VERSION=7
+    links:
+      - mongo
+      - elasticsearch
+    depends_on:
+      - mongo
+      - elasticsearch
+    ports:
+      # Graylog web interface and REST API
+      - 9000:9000
+      # Syslog TCP
+      - 1514:1514
+      # Syslog UDP
+      - 1514:1514/udp
+      # GELF TCP
+      - 12201:12201
+      # GELF UDP
+      - 12201:12201/udp
+      - 5555:5555
+
+  #Gerenciador containers
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 10000:9000
+
+#  rabbitmq-exposer:
+#    image: kbudde/rabbitmq-exporter
+#    ports:
+#      - 9419:9419
